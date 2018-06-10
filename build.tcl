@@ -4,6 +4,13 @@ set arch "x86_64"
 set base "tcl-wibble-0.4"
 set fileurl "http://chiselapp.com/user/andy/repository/wibble/raw/wibble.tcl?name=c5d8adb79a450084894529a0f8c1cbd1586d5fba"
 
+set useArchive 1
+try {
+    package require archive
+} on error {em} {
+    set useArchive 0
+}
+
 set curDir [pwd]
 file mkdir $base
 cd $base
@@ -14,8 +21,12 @@ set var [list echo {package ifneeded wibble 0.4 [list source [file join $dir wib
 exec >@stdout 2>@stderr {*}$var
 cd $curDir
 
-set var [list tar czvf $base.tar.gz $base]
-exec >@stdout 2>@stderr {*}$var
+if {$useArchive == 0} {
+    set var [list tar czvf $base.tar.gz $base]
+    exec >@stdout 2>@stderr {*}$var
+} else {
+    ::archive::create $base.tar.gz gzip ustar [list $base]
+}
 
 if {[file exists build]} {
     file delete -force build
